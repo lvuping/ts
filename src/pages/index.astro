@@ -125,9 +125,9 @@ print(f"Total Sales: ${'{'}results['total_sales']:,.2f{'}'}")`,
     <Sidebar 
       categories={categories} 
       tags={tags} 
-      selectedCategory={selectedCategory} 
-      selectedTag={selectedTag}
-      searchQuery={searchQuery}
+      selectedCategory={selectedCategory || undefined} 
+      selectedTag={selectedTag || undefined}
+      searchQuery={searchQuery || undefined}
     />
 
     <!-- Main Content -->

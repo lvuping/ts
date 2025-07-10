@@ -1,0 +1,22 @@
+
+> pkm@0.0.1 dev
+> astro dev
+
+14:17:06 [@astrojs/node] Enabling sessions with filesystem storage
+14:17:06 [types] Generated 0ms
+14:17:06 [content] Syncing content
+14:17:06 [content] Synced content
+
+ astro  v5.11.0 ready in 181 ms
+
+┃ Local    http://localhost:4321/
+┃ Network  use --host to expose
+
+14:17:06 watching for file changes...
+14:17:09 [200] /api/notes 143ms
+14:17:09 [302] / 1ms
+14:17:09 [201] POST /api/notes 2ms
+14:17:09 [204] DELETE /api/notes/1752124629637 1ms
+14:17:16 [404] POST /api/notes/1752124629637/favorite 1ms
+14:17:23 [200] /api/notes 1ms
+14:17:28 [200] POST /api/notes/1752113979324/favorite 1ms
