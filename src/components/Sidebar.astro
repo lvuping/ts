@@ -14,7 +14,7 @@ const { categories, tags, selectedCategory, selectedTag, searchQuery } = Astro.p
   <div class="p-4 h-full overflow-y-auto">
     <!-- Logo/Title -->
     <div class="mb-6">
-      <h2 class="text-xl font-bold text-gray-900 dark:text-white">Code Notes</h2>
+      <h2 class="text-xl font-bold text-gray-900 dark:text-white">PKM</h2>
     </div>
 
     <!-- Search -->
@@ -22,7 +22,7 @@ const { categories, tags, selectedCategory, selectedTag, searchQuery } = Astro.p
       <input
         type="text"
         id="search-input"
-        placeholder="Search notes..."
+        placeholder="Search PKM..."
         value={searchQuery || ''}
         class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
       />
@@ -39,7 +39,7 @@ const { categories, tags, selectedCategory, selectedTag, searchQuery } = Astro.p
               !selectedCategory && !selectedTag ? 'bg-primary text-primary-foreground' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
-            All Notes
+            All Entries
           </a>
         </li>
         {categories.map((category) => (

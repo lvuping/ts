@@ -1,10 +1,9 @@
-# Code Snippet Manager
-
-A secure web application built with Astro 5 for storing and displaying code snippets with syntax highlighting.
+# PKM (Personal Knowledge Management)
+A secure web application built with Astro 5 for managing personal knowledge with syntax highlighting support.
 
 ## Features
 
-- 🔐 Password protection - Access control for viewing code snippets
+- 🔐 Password protection - Access control for viewing your knowledge base
 - 🎨 Syntax highlighting - Support for multiple programming languages (JavaScript, Python, ABAP, etc.)
 - 🌗 Dark mode support - Toggle between light and dark themes
 - 📋 Copy to clipboard - Easy code copying functionality
@@ -65,7 +64,7 @@ The syntax highlighter currently supports:
 src/
 ├── components/
 │   ├── ui/          # Shadcn/ui components
-│   └── CodeSnippet.astro # Code display component
+│   └── CodeSnippet.astro # Knowledge entry display component
 ├── layouts/
 │   └── Layout.astro # Base layout
 ├── lib/

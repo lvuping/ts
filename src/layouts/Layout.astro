@@ -10,13 +10,19 @@ const { title } = Astro.props;
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content="Code Snippet Manager" />
+    <meta name="description" content="PKM - Personal Knowledge Management" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
   </head>
   <body>
     <slot />
+    <script>
+      // Initialize theme on page load
+      const html = document.documentElement;
+      const currentTheme = localStorage.getItem('theme') || 'light';
+      html.classList.toggle('dark', currentTheme === 'dark');
+    </script>
   </body>
 </html>
 
