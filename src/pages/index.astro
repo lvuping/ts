@@ -192,6 +192,17 @@ print(f"Total Sales: ${'{'}results['total_sales']:,.2f{'}'}")`,
               </button>
             </div>
             <button
+              id="import-btn"
+              class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              title="Import markdown files"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </button>
+            <button
               id="export-btn"
               class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               title="Export notes"
@@ -233,9 +244,9 @@ print(f"Total Sales: ${'{'}results['total_sales']:,.2f{'}'}")`,
         ) : (
           <>
             <!-- Detailed View (default) -->
-            <div id="detailed-view" class="grid gap-8">
+            <div id="detailed-view" class="grid gap-6">
               {notes.map((note) => (
-                <div class="relative group pb-8 border-b border-gray-200 dark:border-gray-700 last:border-b-0 last:pb-0">
+                <div class="relative group p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200" data-note-id={note.id}>
                   <CodeSnippet
                     title={note.title}
                     code={note.content}
@@ -298,7 +309,7 @@ print(f"Total Sales: ${'{'}results['total_sales']:,.2f{'}'}")`,
           <!-- Card View -->
           <div id="card-view" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {notes.map((note) => (
-              <div class="relative group bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="relative group bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700 overflow-hidden" data-note-id={note.id}>
                 <div class="p-6">
                   <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{note.title}</h3>
                   <div class="mb-3">
@@ -375,7 +386,7 @@ print(f"Total Sales: ${'{'}results['total_sales']:,.2f{'}'}")`,
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {notes.map((note) => (
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" data-note-id={note.id}>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                           <button
@@ -549,7 +560,14 @@ print(f"Total Sales: ${'{'}results['total_sales']:,.2f{'}'}")`,
   // Favorite functionality
   document.querySelectorAll('[data-favorite-id]').forEach(button => {
     button.addEventListener('click', async (e) => {
-      const noteId = (e.currentTarget as HTMLElement).getAttribute('data-favorite-id');
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const btn = e.currentTarget as HTMLElement;
+      const noteId = btn.getAttribute('data-favorite-id');
+      
+      // Disable button during request
+      btn.style.pointerEvents = 'none';
       
       try {
         const response = await fetch(`/api/notes/${noteId}/favorite`, {
@@ -557,12 +575,56 @@ print(f"Total Sales: ${'{'}results['total_sales']:,.2f{'}'}")`,
         });
         
         if (response.ok) {
-          window.location.reload();
+          const updatedNote = await response.json();
+          
+          // Update all favorite buttons for this note
+          document.querySelectorAll(`[data-favorite-id="${noteId}"]`).forEach(favoriteBtn => {
+            const svg = favoriteBtn.querySelector('svg');
+            if (svg) {
+              svg.setAttribute('fill', updatedNote.favorite ? 'currentColor' : 'none');
+            }
+            
+            // Update button classes
+            if (updatedNote.favorite) {
+              favoriteBtn.classList.remove('text-gray-400', 'dark:text-gray-500', 'hover:text-yellow-600', 'dark:hover:text-yellow-400');
+              favoriteBtn.classList.add('text-yellow-600', 'dark:text-yellow-400');
+            } else {
+              favoriteBtn.classList.remove('text-yellow-600', 'dark:text-yellow-400');
+              favoriteBtn.classList.add('text-gray-400', 'dark:text-gray-500', 'hover:text-yellow-600', 'dark:hover:text-yellow-400');
+            }
+            
+            // Update title
+            favoriteBtn.setAttribute('title', updatedNote.favorite ? 'Remove from favorites' : 'Add to favorites');
+          });
+          
+          // If we're on the favorites page and unfavoriting, remove the item
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get('favorites') === 'true' && !updatedNote.favorite) {
+            // Find and remove all instances of this note from all views
+            const noteElements = document.querySelectorAll(`[data-note-id="${noteId}"]`);
+            noteElements.forEach(el => {
+              const parent = el.closest('.group') || el.closest('tr') || el.closest('[class*="rounded-lg"]');
+              if (parent) {
+                parent.remove();
+              }
+            });
+            
+            // Update the count
+            const countElement = document.querySelector('.text-sm.text-gray-600.dark\\:text-gray-400');
+            if (countElement) {
+              const currentCount = parseInt(countElement.textContent?.match(/\d+/)?.[0] || '0');
+              const newCount = Math.max(0, currentCount - 1);
+              countElement.textContent = `${newCount} ${newCount === 1 ? 'note' : 'notes'} found`;
+            }
+          }
         } else {
           alert('Failed to update favorite status.');
         }
       } catch (error) {
         alert('An error occurred. Please try again.');
+      } finally {
+        // Re-enable button
+        btn.style.pointerEvents = '';
       }
     });
   });
