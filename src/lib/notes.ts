@@ -154,3 +154,17 @@ export async function getAllTags(): Promise<string[]> {
   const data = await getNotesData();
   return data.tags.sort();
 }
+
+// Toggle favorite status
+export async function toggleFavorite(id: string): Promise<Note | null> {
+  const data = await getNotesData();
+  const index = data.notes.findIndex(note => note.id === id);
+  
+  if (index === -1) return null;
+  
+  data.notes[index].favorite = !data.notes[index].favorite;
+  data.notes[index].updatedAt = new Date().toISOString();
+  
+  await saveNotesData(data);
+  return data.notes[index];
+}

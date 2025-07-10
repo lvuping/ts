@@ -40,7 +40,8 @@
         "python"
       ],
       "createdAt": "2025-07-10T02:19:39.324Z",
-      "updatedAt": "2025-07-10T02:19:39.324Z"
+      "updatedAt": "2025-07-10T05:17:28.711Z",
+      "favorite": true
     }
   ],
   "categories": [
@@ -63,6 +64,7 @@
     "python",
     "test",
     "demo",
-    "updated"
+    "updated",
+    "integration"
   ]
 }

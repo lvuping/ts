@@ -129,9 +129,24 @@ if (!note) {
           </div>
 
           <div>
-            <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Code Content
-            </label>
+            <div class="flex justify-between items-center mb-2">
+              <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Code Content
+              </label>
+              <button
+                type="button"
+                id="llm-assist"
+                class="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                title="Ask AI for help"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                  <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
+                  <path d="M12 2a10 10 0 0 1 10 10"/>
+                  <path d="M12 12h.01"/>
+                </svg>
+                AI Assist
+              </button>
+            </div>
             <textarea
               id="content"
               name="content"
@@ -140,6 +155,30 @@ if (!note) {
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm"
               placeholder="Paste your code here..."
             >{note.content}</textarea>
+            <div id="llm-prompt-container" class="hidden mt-2">
+              <input
+                type="text"
+                id="llm-prompt"
+                placeholder="What would you like AI to help with?"
+                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+              <div class="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  id="llm-submit"
+                  class="px-3 py-1 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors"
+                >
+                  Submit
+                </button>
+                <button
+                  type="button"
+                  id="llm-cancel"
+                  class="px-3 py-1 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="flex gap-4">
@@ -223,6 +262,81 @@ if (!note) {
       } catch (error) {
         alert('An error occurred. Please try again.');
       }
+    }
+  });
+
+  // LLM Assist functionality
+  const llmAssistBtn = document.getElementById('llm-assist');
+  const llmPromptContainer = document.getElementById('llm-prompt-container');
+  const llmPromptInput = document.getElementById('llm-prompt') as HTMLInputElement;
+  const llmSubmitBtn = document.getElementById('llm-submit');
+  const llmCancelBtn = document.getElementById('llm-cancel');
+  const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
+  
+  llmAssistBtn?.addEventListener('click', () => {
+    llmPromptContainer?.classList.remove('hidden');
+    llmPromptInput?.focus();
+  });
+  
+  llmCancelBtn?.addEventListener('click', () => {
+    llmPromptContainer?.classList.add('hidden');
+    llmPromptInput.value = '';
+  });
+  
+  llmSubmitBtn?.addEventListener('click', async () => {
+    const prompt = llmPromptInput?.value.trim();
+    if (!prompt) {
+      alert('Please enter a prompt for AI assistance.');
+      return;
+    }
+    
+    // Show loading state
+    const originalText = llmSubmitBtn.textContent;
+    llmSubmitBtn.textContent = 'Loading...';
+    llmSubmitBtn.setAttribute('disabled', 'true');
+    
+    try {
+      const response = await fetch('/api/llm/assist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          context: contentTextarea?.value || ''
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Append the AI response to the content
+        const aiResponse = data.response;
+        if (contentTextarea.value) {
+          contentTextarea.value += '\n\n// AI Generated:\n' + aiResponse;
+        } else {
+          contentTextarea.value = aiResponse;
+        }
+        
+        // Hide prompt container
+        llmPromptContainer?.classList.add('hidden');
+        llmPromptInput.value = '';
+      } else {
+        alert(data.error || 'Failed to get AI response.');
+      }
+    } catch (error) {
+      alert('An error occurred while getting AI assistance.');
+    } finally {
+      // Restore button state
+      llmSubmitBtn.textContent = originalText;
+      llmSubmitBtn.removeAttribute('disabled');
+    }
+  });
+  
+  // Allow Enter key to submit prompt
+  llmPromptInput?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      llmSubmitBtn?.click();
     }
   });
 </script>

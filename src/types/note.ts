@@ -7,6 +7,7 @@ export interface Note {
   tags: string[];
   createdAt: string;
   updatedAt: string;
+  favorite?: boolean;
 }
 
 export interface NoteInput {
