@@ -273,7 +273,9 @@ const categories = await getAllCategories();
     llmPromptContainer?.classList.add('hidden');
     llmPromptInput.value = '';
     llmDiffContainer?.classList.add('hidden');
-    llmDiffContainer.innerHTML = '';
+    if (llmDiffContainer) {
+      llmDiffContainer.innerHTML = '';
+    }
     lastAIResponse = '';
   });
   
@@ -347,11 +349,13 @@ const categories = await getAllCategories();
           </div>
         `;
         
-        llmDiffContainer.innerHTML = diffViewerHtml;
+        if (llmDiffContainer) {
+          llmDiffContainer.innerHTML = diffViewerHtml;
+        }
         llmDiffContainer?.classList.remove('hidden');
         
         // Initialize the diff viewer
-        const diffViewer = llmDiffContainer.querySelector('.diff-viewer');
+        const diffViewer = llmDiffContainer?.querySelector('.diff-viewer');
         if (diffViewer) {
           highlightDifferences(diffViewer as HTMLElement);
           
@@ -365,7 +369,9 @@ const categories = await getAllCategories();
             llmPromptContainer?.classList.add('hidden');
             llmPromptInput.value = '';
             llmDiffContainer?.classList.add('hidden');
-            llmDiffContainer.innerHTML = '';
+            if (llmDiffContainer) {
+      llmDiffContainer.innerHTML = '';
+    }
             lastAIResponse = '';
           });
           
@@ -375,7 +381,9 @@ const categories = await getAllCategories();
           
           cancelDiffBtn?.addEventListener('click', () => {
             llmDiffContainer?.classList.add('hidden');
-            llmDiffContainer.innerHTML = '';
+            if (llmDiffContainer) {
+      llmDiffContainer.innerHTML = '';
+    }
             lastAIResponse = '';
           });
         }

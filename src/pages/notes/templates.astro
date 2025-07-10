@@ -63,7 +63,7 @@ const templates = await getAllTemplates();
   </div>
 </Layout>
 
-<script define:vars={{ templatesData: templates }} is:inline>
+<script define:vars={{ templatesData: templates }}>
   document.querySelectorAll('[data-template-id]').forEach(button => {
     button.addEventListener('click', (e) => {
       const templateId = e.currentTarget.getAttribute('data-template-id');
