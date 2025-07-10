@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import '../../styles/globals.css';
 import { getAllCategories } from '../../lib/notes';
+import DiffViewer from '../../components/DiffViewer.astro';
 
 const categories = await getAllCategories();
 ---
@@ -137,28 +138,31 @@ const categories = await getAllCategories();
               placeholder="Paste your code here..."
             ></textarea>
             <div id="llm-prompt-container" class="hidden mt-2">
-              <input
-                type="text"
-                id="llm-prompt"
-                placeholder="What would you like AI to help with?"
-                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
-              <div class="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  id="llm-submit"
-                  class="px-3 py-1 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors"
-                >
-                  Submit
-                </button>
-                <button
-                  type="button"
-                  id="llm-cancel"
-                  class="px-3 py-1 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-sm font-medium transition-colors"
-                >
-                  Cancel
-                </button>
+              <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <textarea
+                  id="llm-prompt"
+                  rows="3"
+                  placeholder="Describe what you want to do with this code (e.g., 'add error handling', 'optimize performance', 'explain this function')"
+                  class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                ></textarea>
+                <div class="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    id="llm-submit"
+                    class="px-3 py-1 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Generate
+                  </button>
+                  <button
+                    type="button"
+                    id="llm-cancel"
+                    class="px-3 py-1 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
+              <div id="llm-diff-container" class="hidden mt-3"></div>
             </div>
           </div>
 
@@ -252,10 +256,13 @@ const categories = await getAllCategories();
   // LLM Assist functionality
   const llmAssistBtn = document.getElementById('llm-assist');
   const llmPromptContainer = document.getElementById('llm-prompt-container');
-  const llmPromptInput = document.getElementById('llm-prompt') as HTMLInputElement;
+  const llmPromptInput = document.getElementById('llm-prompt') as HTMLTextAreaElement;
   const llmSubmitBtn = document.getElementById('llm-submit');
   const llmCancelBtn = document.getElementById('llm-cancel');
+  const llmDiffContainer = document.getElementById('llm-diff-container');
   const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
+  
+  let lastAIResponse = '';
   
   llmAssistBtn?.addEventListener('click', () => {
     llmPromptContainer?.classList.remove('hidden');
@@ -265,6 +272,9 @@ const categories = await getAllCategories();
   llmCancelBtn?.addEventListener('click', () => {
     llmPromptContainer?.classList.add('hidden');
     llmPromptInput.value = '';
+    llmDiffContainer?.classList.add('hidden');
+    llmDiffContainer.innerHTML = '';
+    lastAIResponse = '';
   });
   
   llmSubmitBtn?.addEventListener('click', async () => {
@@ -276,7 +286,7 @@ const categories = await getAllCategories();
     
     // Show loading state
     const originalText = llmSubmitBtn.textContent;
-    llmSubmitBtn.textContent = 'Loading...';
+    llmSubmitBtn.textContent = 'Generating...';
     llmSubmitBtn.setAttribute('disabled', 'true');
     
     try {
@@ -287,24 +297,88 @@ const categories = await getAllCategories();
         },
         body: JSON.stringify({
           prompt: prompt,
-          context: contentTextarea?.value || ''
+          context: contentTextarea?.value || '',
+          language: (document.getElementById('language') as HTMLSelectElement).value
         })
       });
       
       const data = await response.json();
       
       if (response.ok) {
-        // Append the AI response to the content
-        const aiResponse = data.response;
-        if (contentTextarea.value) {
-          contentTextarea.value += '\n\n// AI Generated:\n' + aiResponse;
-        } else {
-          contentTextarea.value = aiResponse;
-        }
+        lastAIResponse = data.response;
         
-        // Hide prompt container
-        llmPromptContainer?.classList.add('hidden');
-        llmPromptInput.value = '';
+        // Create and show diff viewer
+        const diffViewerHtml = `
+          <div class="diff-viewer" data-original="${contentTextarea?.value.replace(/"/g, '&quot;') || ''}" data-generated="${lastAIResponse.replace(/"/g, '&quot;')}" data-language="${(document.getElementById('language') as HTMLSelectElement).value}">
+            <div class="diff-header flex justify-between items-center bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-t-md">
+              <div class="flex gap-4">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Original</span>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Generated</span>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  class="apply-btn px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded-md text-sm font-medium transition-colors"
+                >
+                  Apply Changes
+                </button>
+                <button
+                  type="button"
+                  class="regenerate-btn px-3 py-1 bg-blue-600 text-white hover:bg-blue-700 rounded-md text-sm font-medium transition-colors"
+                >
+                  Regenerate
+                </button>
+                <button
+                  type="button"
+                  class="cancel-diff-btn px-3 py-1 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+            <div class="diff-container flex gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-b-md">
+              <div class="diff-pane original-pane flex-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 p-3 overflow-auto max-h-96">
+                <pre class="text-sm font-mono whitespace-pre-wrap">${contentTextarea?.value || ''}</pre>
+              </div>
+              <div class="diff-pane generated-pane flex-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 p-3 overflow-auto max-h-96">
+                <pre class="text-sm font-mono whitespace-pre-wrap">${lastAIResponse}</pre>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        llmDiffContainer.innerHTML = diffViewerHtml;
+        llmDiffContainer?.classList.remove('hidden');
+        
+        // Initialize the diff viewer
+        const diffViewer = llmDiffContainer.querySelector('.diff-viewer');
+        if (diffViewer) {
+          highlightDifferences(diffViewer as HTMLElement);
+          
+          // Add event listeners
+          const applyBtn = diffViewer.querySelector('.apply-btn');
+          const regenerateBtn = diffViewer.querySelector('.regenerate-btn');
+          const cancelDiffBtn = diffViewer.querySelector('.cancel-diff-btn');
+          
+          applyBtn?.addEventListener('click', () => {
+            contentTextarea.value = lastAIResponse;
+            llmPromptContainer?.classList.add('hidden');
+            llmPromptInput.value = '';
+            llmDiffContainer?.classList.add('hidden');
+            llmDiffContainer.innerHTML = '';
+            lastAIResponse = '';
+          });
+          
+          regenerateBtn?.addEventListener('click', () => {
+            llmSubmitBtn?.click();
+          });
+          
+          cancelDiffBtn?.addEventListener('click', () => {
+            llmDiffContainer?.classList.add('hidden');
+            llmDiffContainer.innerHTML = '';
+            lastAIResponse = '';
+          });
+        }
       } else {
         alert(data.error || 'Failed to get AI response.');
       }
@@ -317,9 +391,81 @@ const categories = await getAllCategories();
     }
   });
   
-  // Allow Enter key to submit prompt
-  llmPromptInput?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+  // Diff highlighting function
+  function computeLineDiff(original: string, generated: string) {
+    const originalLines = original.split('\n');
+    const generatedLines = generated.split('\n');
+    
+    const maxLines = Math.max(originalLines.length, generatedLines.length);
+    const diffResult = {
+      original: [] as Array<{line: string, type: 'unchanged' | 'removed' | 'modified'}>,
+      generated: [] as Array<{line: string, type: 'unchanged' | 'added' | 'modified'}>
+    };
+    
+    for (let i = 0; i < maxLines; i++) {
+      const origLine = originalLines[i] || '';
+      const genLine = generatedLines[i] || '';
+      
+      if (origLine === genLine) {
+        diffResult.original.push({ line: origLine, type: 'unchanged' });
+        diffResult.generated.push({ line: genLine, type: 'unchanged' });
+      } else if (i >= originalLines.length) {
+        diffResult.generated.push({ line: genLine, type: 'added' });
+      } else if (i >= generatedLines.length) {
+        diffResult.original.push({ line: origLine, type: 'removed' });
+      } else {
+        diffResult.original.push({ line: origLine, type: 'modified' });
+        diffResult.generated.push({ line: genLine, type: 'modified' });
+      }
+    }
+    
+    return diffResult;
+  }
+
+  function highlightDifferences(viewer: HTMLElement) {
+    const original = viewer.dataset.original || '';
+    const generated = viewer.dataset.generated || '';
+    
+    const diff = computeLineDiff(original, generated);
+    
+    const originalPane = viewer.querySelector('.original-pane pre');
+    const generatedPane = viewer.querySelector('.generated-pane pre');
+    
+    if (originalPane && generatedPane) {
+      originalPane.innerHTML = diff.original.map(item => {
+        const escapedLine = item.line
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        
+        if (item.type === 'removed') {
+          return `<span class="diff-line-removed inline-block w-full">${escapedLine || ' '}</span>`;
+        } else if (item.type === 'modified') {
+          return `<span class="diff-line-modified inline-block w-full">${escapedLine || ' '}</span>`;
+        }
+        return escapedLine || ' ';
+      }).join('\n');
+      
+      generatedPane.innerHTML = diff.generated.map(item => {
+        const escapedLine = item.line
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        
+        if (item.type === 'added') {
+          return `<span class="diff-line-added inline-block w-full">${escapedLine || ' '}</span>`;
+        } else if (item.type === 'modified') {
+          return `<span class="diff-line-modified inline-block w-full">${escapedLine || ' '}</span>`;
+        }
+        return escapedLine || ' ';
+      }).join('\n');
+    }
+  }
+  
+  // Allow Ctrl+Enter to submit prompt
+  llmPromptInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
       llmSubmitBtn?.click();
     }
   });

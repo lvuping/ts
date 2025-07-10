@@ -1,0 +1,183 @@
+---
+export interface Props {
+  original: string;
+  generated: string;
+  language?: string;
+}
+
+const { original, generated, language = 'text' } = Astro.props;
+---
+
+<div class="diff-viewer" data-original={original} data-generated={generated} data-language={language}>
+  <div class="diff-header flex justify-between items-center bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-t-md">
+    <div class="flex gap-4">
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Original</span>
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Generated</span>
+    </div>
+    <div class="flex gap-2">
+      <button
+        type="button"
+        class="apply-btn px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded-md text-sm font-medium transition-colors"
+      >
+        Apply Changes
+      </button>
+      <button
+        type="button"
+        class="regenerate-btn px-3 py-1 bg-blue-600 text-white hover:bg-blue-700 rounded-md text-sm font-medium transition-colors"
+      >
+        Regenerate
+      </button>
+      <button
+        type="button"
+        class="cancel-btn px-3 py-1 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-sm font-medium transition-colors"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+  <div class="diff-container flex gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-b-md">
+    <div class="diff-pane original-pane flex-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 p-3 overflow-auto max-h-96">
+      <pre class="text-sm font-mono whitespace-pre-wrap">{original}</pre>
+    </div>
+    <div class="diff-pane generated-pane flex-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 p-3 overflow-auto max-h-96">
+      <pre class="text-sm font-mono whitespace-pre-wrap">{generated}</pre>
+    </div>
+  </div>
+</div>
+
+<style>
+  .diff-viewer {
+    margin-top: 1rem;
+  }
+
+  .diff-pane {
+    position: relative;
+  }
+
+  .diff-line-added {
+    background-color: #d4f4dd;
+  }
+
+  .dark .diff-line-added {
+    background-color: #1a3a1a;
+  }
+
+  .diff-line-removed {
+    background-color: #fedddd;
+  }
+
+  .dark .diff-line-removed {
+    background-color: #3a1a1a;
+  }
+
+  .diff-line-modified {
+    background-color: #fff3cd;
+  }
+
+  .dark .diff-line-modified {
+    background-color: #3a3a1a;
+  }
+</style>
+
+<script>
+  function computeLineDiff(original: string, generated: string) {
+    const originalLines = original.split('\n');
+    const generatedLines = generated.split('\n');
+    
+    // Simple line-by-line diff
+    const maxLines = Math.max(originalLines.length, generatedLines.length);
+    const diffResult = {
+      original: [] as Array<{line: string, type: 'unchanged' | 'removed' | 'modified'}>,
+      generated: [] as Array<{line: string, type: 'unchanged' | 'added' | 'modified'}>
+    };
+    
+    for (let i = 0; i < maxLines; i++) {
+      const origLine = originalLines[i] || '';
+      const genLine = generatedLines[i] || '';
+      
+      if (origLine === genLine) {
+        diffResult.original.push({ line: origLine, type: 'unchanged' });
+        diffResult.generated.push({ line: genLine, type: 'unchanged' });
+      } else if (i >= originalLines.length) {
+        diffResult.generated.push({ line: genLine, type: 'added' });
+      } else if (i >= generatedLines.length) {
+        diffResult.original.push({ line: origLine, type: 'removed' });
+      } else {
+        diffResult.original.push({ line: origLine, type: 'modified' });
+        diffResult.generated.push({ line: genLine, type: 'modified' });
+      }
+    }
+    
+    return diffResult;
+  }
+
+  function highlightDifferences(viewer: HTMLElement) {
+    const original = viewer.dataset.original || '';
+    const generated = viewer.dataset.generated || '';
+    
+    const diff = computeLineDiff(original, generated);
+    
+    const originalPane = viewer.querySelector('.original-pane pre');
+    const generatedPane = viewer.querySelector('.generated-pane pre');
+    
+    if (originalPane && generatedPane) {
+      // Highlight original pane
+      originalPane.innerHTML = diff.original.map(item => {
+        const escapedLine = item.line
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        
+        if (item.type === 'removed') {
+          return `<span class="diff-line-removed inline-block w-full">${escapedLine || ' '}</span>`;
+        } else if (item.type === 'modified') {
+          return `<span class="diff-line-modified inline-block w-full">${escapedLine || ' '}</span>`;
+        }
+        return escapedLine || ' ';
+      }).join('\n');
+      
+      // Highlight generated pane
+      generatedPane.innerHTML = diff.generated.map(item => {
+        const escapedLine = item.line
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        
+        if (item.type === 'added') {
+          return `<span class="diff-line-added inline-block w-full">${escapedLine || ' '}</span>`;
+        } else if (item.type === 'modified') {
+          return `<span class="diff-line-modified inline-block w-full">${escapedLine || ' '}</span>`;
+        }
+        return escapedLine || ' ';
+      }).join('\n');
+    }
+  }
+
+  // Initialize all diff viewers on the page
+  document.querySelectorAll('.diff-viewer').forEach((viewer) => {
+    highlightDifferences(viewer as HTMLElement);
+    
+    // Add event listeners for buttons
+    const applyBtn = viewer.querySelector('.apply-btn');
+    const regenerateBtn = viewer.querySelector('.regenerate-btn');
+    const cancelBtn = viewer.querySelector('.cancel-btn');
+    
+    applyBtn?.addEventListener('click', () => {
+      const event = new CustomEvent('diffApply', {
+        detail: { content: viewer.getAttribute('data-generated') },
+        bubbles: true
+      });
+      viewer.dispatchEvent(event);
+    });
+    
+    regenerateBtn?.addEventListener('click', () => {
+      const event = new CustomEvent('diffRegenerate', { bubbles: true });
+      viewer.dispatchEvent(event);
+    });
+    
+    cancelBtn?.addEventListener('click', () => {
+      const event = new CustomEvent('diffCancel', { bubbles: true });
+      viewer.dispatchEvent(event);
+    });
+  });
+</script>
