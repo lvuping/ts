@@ -652,6 +652,9 @@ const MyComponent = () => {
           
           // Update all favorite buttons for this note
           document.querySelectorAll(`[data-favorite-id="${noteId}"]`).forEach(favoriteBtn => {
+            // Double-check we have the exact match
+            if (favoriteBtn.getAttribute('data-favorite-id') !== noteId) return;
+            
             const svg = favoriteBtn.querySelector('svg');
             if (svg) {
               svg.setAttribute('fill', updatedNote.favorite ? 'currentColor' : 'none');
@@ -676,6 +679,9 @@ const MyComponent = () => {
             // Find and remove all instances of this note from all views
             const noteElements = document.querySelectorAll(`[data-note-id="${noteId}"]`);
             noteElements.forEach(el => {
+              // Double-check we have the exact match
+              if (el.getAttribute('data-note-id') !== noteId) return;
+              
               const parent = el.closest('.group') || el.closest('tr') || el.closest('[class*="rounded-lg"]');
               if (parent) {
                 parent.remove();

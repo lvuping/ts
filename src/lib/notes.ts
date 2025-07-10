@@ -3,6 +3,37 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 const DATA_FILE = path.join(process.cwd(), 'src/lib/data/notes.json');
+const LOCK_FILE = path.join(process.cwd(), 'src/lib/data/.notes.lock');
+const LOCK_TIMEOUT = 5000; // 5 seconds
+
+// Simple file-based lock mechanism
+async function acquireLock(): Promise<void> {
+  const startTime = Date.now();
+  while (true) {
+    try {
+      // Try to create lock file exclusively
+      await fs.writeFile(LOCK_FILE, process.pid.toString(), { flag: 'wx' });
+      return;
+    } catch (error) {
+      // Lock file exists, check if it's stale
+      if (Date.now() - startTime > LOCK_TIMEOUT) {
+        // Force remove stale lock
+        try {
+          await fs.unlink(LOCK_FILE);
+        } catch {}
+        throw new Error('Lock acquisition timeout');
+      }
+      // Wait a bit before retrying
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+  }
+}
+
+async function releaseLock(): Promise<void> {
+  try {
+    await fs.unlink(LOCK_FILE);
+  } catch {}
+}
 
 // Initialize data file if it doesn't exist
 async function initializeDataFile() {
@@ -167,64 +198,79 @@ export async function getNoteById(id: string): Promise<Note | null> {
 
 // Create note
 export async function createNote(input: NoteInput): Promise<Note> {
-  const data = await getNotesData();
-  
-  const newNote: Note = {
-    id: Date.now().toString(),
-    ...input,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  
-  data.notes.push(newNote);
-  
-  // Update tags list
-  input.tags.forEach(tag => {
-    if (!data.tags.includes(tag)) {
-      data.tags.push(tag);
-    }
-  });
-  
-  await saveNotesData(data);
-  return newNote;
+  await acquireLock();
+  try {
+    const data = await getNotesData();
+    
+    const newNote: Note = {
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
+      ...input,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    data.notes.push(newNote);
+    
+    // Update tags list
+    input.tags.forEach(tag => {
+      if (!data.tags.includes(tag)) {
+        data.tags.push(tag);
+      }
+    });
+    
+    await saveNotesData(data);
+    return newNote;
+  } finally {
+    await releaseLock();
+  }
 }
 
 // Update note
 export async function updateNote(id: string, input: NoteInput): Promise<Note | null> {
-  const data = await getNotesData();
-  const index = data.notes.findIndex(note => note.id === id);
-  
-  if (index === -1) return null;
-  
-  const updatedNote: Note = {
-    ...data.notes[index],
-    ...input,
-    updatedAt: new Date().toISOString()
-  };
-  
-  data.notes[index] = updatedNote;
-  
-  // Update tags list
-  input.tags.forEach(tag => {
-    if (!data.tags.includes(tag)) {
-      data.tags.push(tag);
-    }
-  });
-  
-  await saveNotesData(data);
-  return updatedNote;
+  await acquireLock();
+  try {
+    const data = await getNotesData();
+    const index = data.notes.findIndex(note => note.id === id);
+    
+    if (index === -1) return null;
+    
+    const updatedNote: Note = {
+      ...data.notes[index],
+      ...input,
+      updatedAt: new Date().toISOString()
+    };
+    
+    data.notes[index] = updatedNote;
+    
+    // Update tags list
+    input.tags.forEach(tag => {
+      if (!data.tags.includes(tag)) {
+        data.tags.push(tag);
+      }
+    });
+    
+    await saveNotesData(data);
+    return updatedNote;
+  } finally {
+    await releaseLock();
+  }
 }
 
 // Delete note
 export async function deleteNote(id: string): Promise<boolean> {
-  const data = await getNotesData();
-  const index = data.notes.findIndex(note => note.id === id);
-  
-  if (index === -1) return false;
-  
-  data.notes.splice(index, 1);
-  await saveNotesData(data);
-  return true;
+  await acquireLock();
+  try {
+    const data = await getNotesData();
+    const index = data.notes.findIndex(note => note.id === id);
+    
+    if (index === -1) return false;
+    
+    data.notes.splice(index, 1);
+    await saveNotesData(data);
+    return true;
+  } finally {
+    await releaseLock();
+  }
 }
 
 // Get all categories
@@ -241,16 +287,21 @@ export async function getAllTags(): Promise<string[]> {
 
 // Toggle favorite status
 export async function toggleFavorite(id: string): Promise<Note | null> {
-  const data = await getNotesData();
-  const index = data.notes.findIndex(note => note.id === id);
-  
-  if (index === -1) return null;
-  
-  data.notes[index].favorite = !data.notes[index].favorite;
-  data.notes[index].updatedAt = new Date().toISOString();
-  
-  await saveNotesData(data);
-  return data.notes[index];
+  await acquireLock();
+  try {
+    const data = await getNotesData();
+    const index = data.notes.findIndex(note => note.id === id);
+    
+    if (index === -1) return null;
+    
+    data.notes[index].favorite = !data.notes[index].favorite;
+    data.notes[index].updatedAt = new Date().toISOString();
+    
+    await saveNotesData(data);
+    return data.notes[index];
+  } finally {
+    await releaseLock();
+  }
 }
 
 // Get all templates

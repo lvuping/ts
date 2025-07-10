@@ -15,7 +15,7 @@
       "updatedAt": "2025-07-10T02:19:39.323Z"
     },
     {
-      "id": "1752113979323",
+      "id": "1752113979324js",
       "title": "JavaScript Async Function",
       "content": "async function fetchUserData(userId) {\n  try {\n    const response = await fetch(`/api/users/${userId}`);\n    if (!response.ok) {\n      throw new Error(`HTTP error! status: ${response.status}`);\n    }\n    const data = await response.json();\n    return data;\n  } catch (error) {\n    console.error('Error fetching user data:', error);\n    return null;\n  }\n}\n\n// Usage\nconst user = await fetchUserData(123);\nconsole.log(user);",
       "language": "javascript",
