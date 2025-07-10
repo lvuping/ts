@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { prompt, context } = await request.json();
+    const { prompt, context, language } = await request.json();
     
     if (!prompt) {
       return new Response(JSON.stringify({ error: 'Prompt is required' }), {
@@ -32,14 +32,20 @@ export const POST: APIRoute = async ({ request }) => {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `You are a helpful coding assistant. The user is creating a code snippet and needs help.
+            text: `You are an expert coding assistant helping with code snippets. 
             
-Current context:
-${context ? `Code: ${context}` : 'No code yet'}
+Current code context:
+${context ? `\`\`\`${language || 'text'}\n${context}\n\`\`\`` : 'No existing code'}
 
 User request: ${prompt}
 
-Please provide a helpful response. If they're asking for code, provide clean, well-commented code that follows best practices.`
+Instructions:
+- If asked to modify existing code, provide the complete modified version
+- Write clean, well-structured code following best practices
+- Include helpful comments only where necessary
+- Use the same coding style and patterns as the existing code
+- For explanations, be concise and focus on the key points
+- If generating new code, ensure it's production-ready`
           }]
         }]
       })

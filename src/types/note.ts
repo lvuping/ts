@@ -8,6 +8,8 @@ export interface Note {
   createdAt: string;
   updatedAt: string;
   favorite?: boolean;
+  relatedNotes?: string[]; // IDs of related notes
+  template?: string; // Template name if created from template
 }
 
 export interface NoteInput {
@@ -21,5 +23,16 @@ export interface NoteInput {
 export interface NotesData {
   notes: Note[];
   categories: string[];
+  tags: string[];
+  templates?: NoteTemplate[];
+}
+
+export interface NoteTemplate {
+  id: string;
+  name: string;
+  description: string;
+  content: string;
+  language: string;
+  category: string;
   tags: string[];
 }

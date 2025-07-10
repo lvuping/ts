@@ -192,6 +192,28 @@ const categories = await getAllCategories();
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   });
 
+  // Check for template from sessionStorage
+  const templateData = sessionStorage.getItem('selectedTemplate');
+  if (templateData) {
+    const template = JSON.parse(templateData);
+    
+    // Pre-fill form with template data
+    const titleInput = document.getElementById('title') as HTMLInputElement;
+    const categorySelect = document.getElementById('category') as HTMLSelectElement;
+    const languageSelect = document.getElementById('language') as HTMLSelectElement;
+    const tagsInput = document.getElementById('tags') as HTMLInputElement;
+    const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
+    
+    if (titleInput) titleInput.value = template.name + ' - Copy';
+    if (categorySelect) categorySelect.value = template.category;
+    if (languageSelect) languageSelect.value = template.language;
+    if (tagsInput) tagsInput.value = template.tags.join(', ');
+    if (contentTextarea) contentTextarea.value = template.content;
+    
+    // Clear template from sessionStorage
+    sessionStorage.removeItem('selectedTemplate');
+  }
+
   const form = document.getElementById('note-form') as HTMLFormElement;
   
   form?.addEventListener('submit', async (e) => {

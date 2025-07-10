@@ -74,110 +74,147 @@ if (!note) {
           </div>
 
           <div>
-            <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Category
-            </label>
-            <select
-              id="category"
-              name="category"
-              required
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            >
-              <option value="">Select a category</option>
-              {categories.map((category) => (
-                <option value={category} selected={category === note.category}>{category}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label for="language" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Language
-            </label>
-            <select
-              id="language"
-              name="language"
-              required
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            >
-              <option value="">Select a language</option>
-              <option value="javascript" selected={note.language === 'javascript'}>JavaScript</option>
-              <option value="typescript" selected={note.language === 'typescript'}>TypeScript</option>
-              <option value="python" selected={note.language === 'python'}>Python</option>
-              <option value="abap" selected={note.language === 'abap'}>ABAP</option>
-              <option value="sql" selected={note.language === 'sql'}>SQL</option>
-              <option value="html" selected={note.language === 'html'}>HTML</option>
-              <option value="css" selected={note.language === 'css'}>CSS</option>
-              <option value="bash" selected={note.language === 'bash'}>Bash</option>
-              <option value="json" selected={note.language === 'json'}>JSON</option>
-              <option value="text" selected={note.language === 'text'}>Plain Text</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Tags
-            </label>
-            <input
-              type="text"
-              id="tags"
-              name="tags"
-              value={note.tags.join(', ')}
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Enter tags separated by commas (e.g., api, async, database)"
-            />
-          </div>
-
-          <div>
             <div class="flex justify-between items-center mb-2">
               <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Code Content
               </label>
-              <button
-                type="button"
-                id="llm-assist"
-                class="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                title="Ask AI for help"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
-                  <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
-                  <path d="M12 2a10 10 0 0 1 10 10"/>
-                  <path d="M12 12h.01"/>
-                </svg>
-                AI Assist
-              </button>
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  id="llm-assist"
+                  class="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                  title="Ask AI for help"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                    <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
+                    <path d="M12 2a10 10 0 0 1 10 10"/>
+                    <path d="M12 12h.01"/>
+                  </svg>
+                  AI Assist
+                </button>
+                <button
+                  type="button"
+                  id="toggle-metadata"
+                  class="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                  title="Toggle metadata"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                    <path d="M12 3v18m0-18l-3 3m3-3l3 3m-3 18l-3-3m3 3l3-3"/>
+                  </svg>
+                  Metadata
+                </button>
+              </div>
             </div>
             <textarea
               id="content"
               name="content"
-              rows="15"
+              rows="20"
               required
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm"
               placeholder="Paste your code here..."
             >{note.content}</textarea>
             <div id="llm-prompt-container" class="hidden mt-2">
+              <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <textarea
+                  id="llm-prompt"
+                  rows="3"
+                  placeholder="Describe what you want to do with this code (e.g., 'add error handling', 'optimize performance', 'explain this function')"
+                  class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                ></textarea>
+                <div class="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    id="llm-submit"
+                    class="px-3 py-1 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Generate
+                  </button>
+                  <button
+                    type="button"
+                    id="llm-replace"
+                    class="px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded-md text-sm font-medium transition-colors hidden"
+                  >
+                    Replace Code
+                  </button>
+                  <button
+                    type="button"
+                    id="llm-append"
+                    class="px-3 py-1 bg-blue-600 text-white hover:bg-blue-700 rounded-md text-sm font-medium transition-colors hidden"
+                  >
+                    Append to Code
+                  </button>
+                  <button
+                    type="button"
+                    id="llm-cancel"
+                    class="px-3 py-1 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <div id="llm-response" class="hidden mt-3">
+                  <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">AI Response:</div>
+                  <pre id="llm-response-content" class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md text-sm overflow-x-auto"></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="metadata-section" class="hidden space-y-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Category
+                </label>
+                <select
+                  id="category"
+                  name="category"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((category) => (
+                    <option value={category} selected={category === note.category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label for="language" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Language
+                </label>
+                <select
+                  id="language"
+                  name="language"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="">Select a language</option>
+                  <option value="javascript" selected={note.language === 'javascript'}>JavaScript</option>
+                  <option value="typescript" selected={note.language === 'typescript'}>TypeScript</option>
+                  <option value="python" selected={note.language === 'python'}>Python</option>
+                  <option value="abap" selected={note.language === 'abap'}>ABAP</option>
+                  <option value="sql" selected={note.language === 'sql'}>SQL</option>
+                  <option value="html" selected={note.language === 'html'}>HTML</option>
+                  <option value="css" selected={note.language === 'css'}>CSS</option>
+                  <option value="bash" selected={note.language === 'bash'}>Bash</option>
+                  <option value="json" selected={note.language === 'json'}>JSON</option>
+                  <option value="text" selected={note.language === 'text'}>Plain Text</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Tags
+              </label>
               <input
                 type="text"
-                id="llm-prompt"
-                placeholder="What would you like AI to help with?"
-                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                id="tags"
+                name="tags"
+                value={note.tags.join(', ')}
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Enter tags separated by commas (e.g., api, async, database)"
               />
-              <div class="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  id="llm-submit"
-                  class="px-3 py-1 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors"
-                >
-                  Submit
-                </button>
-                <button
-                  type="button"
-                  id="llm-cancel"
-                  class="px-3 py-1 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-sm font-medium transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
             </div>
           </div>
 
@@ -201,7 +238,7 @@ if (!note) {
   </div>
 </Layout>
 
-<script define:vars={{ noteId: id }}>
+<script define:vars={{ noteId: id }} is:inline>
   // Theme toggle functionality
   const themeToggle = document.getElementById('theme-toggle');
   const html = document.documentElement;
@@ -211,14 +248,14 @@ if (!note) {
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   });
 
-  const form = document.getElementById('note-form') as HTMLFormElement;
+  const form = document.getElementById('note-form');
   const deleteBtn = document.getElementById('delete-btn');
   
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const formData = new FormData(form);
-    const tags = formData.get('tags') as string;
+    const tags = formData.get('tags');
     
     const noteData = {
       title: formData.get('title'),
@@ -265,13 +302,27 @@ if (!note) {
     }
   });
 
+  // Toggle metadata section
+  const toggleMetadataBtn = document.getElementById('toggle-metadata');
+  const metadataSection = document.getElementById('metadata-section');
+  
+  toggleMetadataBtn?.addEventListener('click', () => {
+    metadataSection?.classList.toggle('hidden');
+  });
+
   // LLM Assist functionality
   const llmAssistBtn = document.getElementById('llm-assist');
   const llmPromptContainer = document.getElementById('llm-prompt-container');
-  const llmPromptInput = document.getElementById('llm-prompt') as HTMLInputElement;
+  const llmPromptInput = document.getElementById('llm-prompt');
   const llmSubmitBtn = document.getElementById('llm-submit');
+  const llmReplaceBtn = document.getElementById('llm-replace');
+  const llmAppendBtn = document.getElementById('llm-append');
   const llmCancelBtn = document.getElementById('llm-cancel');
-  const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
+  const llmResponseDiv = document.getElementById('llm-response');
+  const llmResponseContent = document.getElementById('llm-response-content');
+  const contentTextarea = document.getElementById('content');
+  
+  let lastAIResponse = '';
   
   llmAssistBtn?.addEventListener('click', () => {
     llmPromptContainer?.classList.remove('hidden');
@@ -281,6 +332,10 @@ if (!note) {
   llmCancelBtn?.addEventListener('click', () => {
     llmPromptContainer?.classList.add('hidden');
     llmPromptInput.value = '';
+    llmResponseDiv?.classList.add('hidden');
+    llmReplaceBtn?.classList.add('hidden');
+    llmAppendBtn?.classList.add('hidden');
+    lastAIResponse = '';
   });
   
   llmSubmitBtn?.addEventListener('click', async () => {
@@ -292,7 +347,7 @@ if (!note) {
     
     // Show loading state
     const originalText = llmSubmitBtn.textContent;
-    llmSubmitBtn.textContent = 'Loading...';
+    llmSubmitBtn.textContent = 'Generating...';
     llmSubmitBtn.setAttribute('disabled', 'true');
     
     try {
@@ -303,24 +358,23 @@ if (!note) {
         },
         body: JSON.stringify({
           prompt: prompt,
-          context: contentTextarea?.value || ''
+          context: contentTextarea?.value || '',
+          language: document.getElementById('language').value
         })
       });
       
       const data = await response.json();
       
       if (response.ok) {
-        // Append the AI response to the content
-        const aiResponse = data.response;
-        if (contentTextarea.value) {
-          contentTextarea.value += '\n\n// AI Generated:\n' + aiResponse;
-        } else {
-          contentTextarea.value = aiResponse;
-        }
+        lastAIResponse = data.response;
         
-        // Hide prompt container
-        llmPromptContainer?.classList.add('hidden');
-        llmPromptInput.value = '';
+        // Show the response
+        if (llmResponseContent) {
+          llmResponseContent.textContent = lastAIResponse;
+        }
+        llmResponseDiv?.classList.remove('hidden');
+        llmReplaceBtn?.classList.remove('hidden');
+        llmAppendBtn?.classList.remove('hidden');
       } else {
         alert(data.error || 'Failed to get AI response.');
       }
@@ -333,9 +387,40 @@ if (!note) {
     }
   });
   
-  // Allow Enter key to submit prompt
-  llmPromptInput?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+  // Replace code button
+  llmReplaceBtn?.addEventListener('click', () => {
+    if (lastAIResponse) {
+      contentTextarea.value = lastAIResponse;
+      llmPromptContainer?.classList.add('hidden');
+      llmPromptInput.value = '';
+      llmResponseDiv?.classList.add('hidden');
+      llmReplaceBtn?.classList.add('hidden');
+      llmAppendBtn?.classList.add('hidden');
+      lastAIResponse = '';
+    }
+  });
+  
+  // Append code button
+  llmAppendBtn?.addEventListener('click', () => {
+    if (lastAIResponse) {
+      if (contentTextarea.value) {
+        contentTextarea.value += '\n\n' + lastAIResponse;
+      } else {
+        contentTextarea.value = lastAIResponse;
+      }
+      llmPromptContainer?.classList.add('hidden');
+      llmPromptInput.value = '';
+      llmResponseDiv?.classList.add('hidden');
+      llmReplaceBtn?.classList.add('hidden');
+      llmAppendBtn?.classList.add('hidden');
+      lastAIResponse = '';
+    }
+  });
+  
+  // Allow Ctrl+Enter to submit prompt
+  llmPromptInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
       llmSubmitBtn?.click();
     }
   });

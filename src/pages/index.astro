@@ -327,11 +327,11 @@ print(f"Total Sales: ${'{'}results['total_sales']:,.2f{'}'}")`,
       const notes = await response.json();
       
       // Create markdown content
-      const markdown = notes.map(note => {
+      const markdown = notes.map((note: any) => {
         return `# ${note.title}
 
 **Category:** ${note.category}  
-**Tags:** ${note.tags.map(tag => `#${tag}`).join(', ')}  
+**Tags:** ${note.tags.map((tag: any) => `#${tag}`).join(', ')}  
 **Updated:** ${new Date(note.updatedAt).toLocaleDateString()}  
 
 \`\`\`${note.language}
@@ -353,6 +353,156 @@ ${note.content}
       URL.revokeObjectURL(url);
     } catch (error) {
       alert('Failed to export notes.');
+    }
+  });
+
+  // Import functionality
+  const importBtn = document.getElementById('import-btn');
+  importBtn?.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.md,.markdown';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const markdown = e.target?.result as string;
+        
+        try {
+          const response = await fetch('/api/notes/import', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ markdown })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            alert(`Successfully imported ${data.count} notes`);
+            window.location.reload();
+          } else {
+            alert(data.error || 'Failed to import notes');
+          }
+        } catch (error) {
+          alert('An error occurred during import');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  });
+
+  // Bulk selection functionality
+  const bulkSelectToggle = document.getElementById('bulk-select-toggle');
+  const bulkActions = document.getElementById('bulk-actions');
+  const selectedCountSpan = document.getElementById('selected-count');
+  const bulkDeleteBtn = document.getElementById('bulk-delete');
+  const bulkExportBtn = document.getElementById('bulk-export');
+  const bulkCancelBtn = document.getElementById('bulk-cancel');
+  let bulkSelectMode = false;
+  
+  // Show bulk select button only if there are notes
+  if (document.querySelectorAll('[data-note-id]').length > 0) {
+    bulkSelectToggle?.classList.remove('hidden');
+  }
+  
+  bulkSelectToggle?.addEventListener('click', () => {
+    // bulkSelectMode = true;
+    bulkActions?.classList.remove('hidden');
+    document.querySelectorAll('.bulk-select-checkbox').forEach(cb => {
+      cb.classList.remove('hidden');
+    });
+  });
+  
+  bulkCancelBtn?.addEventListener('click', () => {
+    // bulkSelectMode = false;
+    bulkActions?.classList.add('hidden');
+    document.querySelectorAll('.bulk-select-checkbox').forEach(cb => {
+      cb.classList.add('hidden');
+      (cb as HTMLInputElement).checked = false;
+    });
+    updateSelectedCount();
+  });
+  
+  function updateSelectedCount() {
+    const checked = document.querySelectorAll('.bulk-select-checkbox:checked').length;
+    if (selectedCountSpan) {
+      selectedCountSpan.textContent = checked.toString();
+    }
+  }
+  
+  document.querySelectorAll('.bulk-select-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+  });
+  
+  bulkDeleteBtn?.addEventListener('click', async () => {
+    const selected = Array.from(document.querySelectorAll('.bulk-select-checkbox:checked'))
+      .map(cb => (cb as HTMLInputElement).getAttribute('data-note-id'))
+      .filter(id => id);
+    
+    if (selected.length === 0) {
+      alert('No notes selected');
+      return;
+    }
+    
+    if (confirm(`Are you sure you want to delete ${selected.length} notes?`)) {
+      try {
+        for (const noteId of selected) {
+          await fetch(`/api/notes/${noteId}`, { method: 'DELETE' });
+        }
+        window.location.reload();
+      } catch (error) {
+        alert('Failed to delete some notes');
+      }
+    }
+  });
+  
+  bulkExportBtn?.addEventListener('click', async () => {
+    const selected = Array.from(document.querySelectorAll('.bulk-select-checkbox:checked'))
+      .map(cb => (cb as HTMLInputElement).getAttribute('data-note-id'))
+      .filter(id => id);
+    
+    if (selected.length === 0) {
+      alert('No notes selected');
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/notes');
+      const allNotes = await response.json();
+      const selectedNotes = allNotes.filter((note: any) => selected.includes(note.id));
+      
+      // Create markdown content
+      const markdown = selectedNotes.map((note: any) => {
+        return `# ${note.title}
+
+**Category:** ${note.category}  
+**Tags:** ${note.tags.map((tag: any) => `#${tag}`).join(', ')}  
+**Updated:** ${new Date(note.updatedAt).toLocaleDateString()}  
+
+\`\`\`${note.language}
+${note.content}
+\`\`\`
+
+---
+
+`;
+      }).join('\n');
+      
+      // Download markdown file
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pkm-export-selected-${new Date().toISOString().split('T')[0]}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      alert('Failed to export notes');
     }
   });
 </script>
