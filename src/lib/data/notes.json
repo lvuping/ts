@@ -1,0 +1,68 @@
+{
+  "notes": [
+    {
+      "id": "1752113979323",
+      "title": "ABAP Select Statement",
+      "content": "DATA: lt_users TYPE TABLE OF usr02,\n      ls_user TYPE usr02.\n\nSELECT * FROM usr02\n  INTO TABLE lt_users\n  WHERE bname LIKE 'A%'\n  AND gltgb >= sy-datum.\n\nLOOP AT lt_users INTO ls_user.\n  WRITE: / ls_user-bname, ls_user-ustyp.\nENDLOOP.",
+      "language": "abap",
+      "category": "Backend",
+      "tags": [
+        "database",
+        "sap",
+        "abap"
+      ],
+      "createdAt": "2025-07-10T02:19:39.323Z",
+      "updatedAt": "2025-07-10T02:19:39.323Z"
+    },
+    {
+      "id": "1752113979323",
+      "title": "JavaScript Async Function",
+      "content": "async function fetchUserData(userId) {\n  try {\n    const response = await fetch(`/api/users/${userId}`);\n    if (!response.ok) {\n      throw new Error(`HTTP error! status: ${response.status}`);\n    }\n    const data = await response.json();\n    return data;\n  } catch (error) {\n    console.error('Error fetching user data:', error);\n    return null;\n  }\n}\n\n// Usage\nconst user = await fetchUserData(123);\nconsole.log(user);",
+      "language": "javascript",
+      "category": "Frontend",
+      "tags": [
+        "async",
+        "api",
+        "javascript"
+      ],
+      "createdAt": "2025-07-10T02:19:39.323Z",
+      "updatedAt": "2025-07-10T02:19:39.323Z"
+    },
+    {
+      "id": "1752113979324",
+      "title": "Python Data Processing",
+      "content": "import pandas as pd\nimport numpy as np\n\ndef process_sales_data(file_path):\n    \"\"\"Process sales data and return summary statistics\"\"\"\n    # Read CSV file\n    df = pd.read_csv(file_path)\n    \n    # Clean data\n    df['date'] = pd.to_datetime(df['date'])\n    df['amount'] = pd.to_numeric(df['amount'], errors='coerce')\n    df = df.dropna()\n    \n    # Calculate statistics\n    summary = {\n        'total_sales': df['amount'].sum(),\n        'average_sale': df['amount'].mean(),\n        'top_product': df.groupby('product')['amount'].sum().idxmax(),\n        'daily_average': df.groupby(df['date'].dt.date)['amount'].sum().mean()\n    }\n    \n    return summary\n\n# Example usage\nresults = process_sales_data('sales_data.csv')\nprint(f\"Total Sales: {results['total_sales']:,.2f{'}'}\")",
+      "language": "python",
+      "category": "Backend",
+      "tags": [
+        "pandas",
+        "data-processing",
+        "python"
+      ],
+      "createdAt": "2025-07-10T02:19:39.324Z",
+      "updatedAt": "2025-07-10T02:19:39.324Z"
+    }
+  ],
+  "categories": [
+    "Frontend",
+    "Backend",
+    "Database",
+    "DevOps",
+    "Security",
+    "Other"
+  ],
+  "tags": [
+    "database",
+    "sap",
+    "abap",
+    "async",
+    "api",
+    "javascript",
+    "pandas",
+    "data-processing",
+    "python",
+    "test",
+    "demo",
+    "updated"
+  ]
+}

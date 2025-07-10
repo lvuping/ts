@@ -1,13 +1,41 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import CodeSnippet from '../components/CodeSnippet.astro';
+import Sidebar from '../components/Sidebar.astro';
 import '../styles/globals.css';
+import { getAllNotes, getNotesByCategory, getNotesByTag, searchNotes, getAllCategories, getAllTags } from '../lib/notes';
+import type { Note } from '../types/note';
 
-// Sample code snippets - in a real app, these would come from a database
-const snippets = [
-  {
+// Get query parameters
+const url = new URL(Astro.request.url);
+const selectedCategory = url.searchParams.get('category');
+const selectedTag = url.searchParams.get('tag');
+const searchQuery = url.searchParams.get('search');
+
+// Fetch notes based on filters
+let notes: Note[] = [];
+if (searchQuery) {
+  notes = await searchNotes(searchQuery);
+} else if (selectedCategory) {
+  notes = await getNotesByCategory(selectedCategory);
+} else if (selectedTag) {
+  notes = await getNotesByTag(selectedTag);
+} else {
+  notes = await getAllNotes();
+}
+
+// Get categories and tags for sidebar
+const categories = await getAllCategories();
+const tags = await getAllTags();
+
+// Initialize with sample data if no notes exist
+if (notes.length === 0 && !selectedCategory && !selectedTag && !searchQuery) {
+  const { createNote } = await import('../lib/notes');
+  
+  // Create sample notes
+  await createNote({
     title: "ABAP Select Statement",
-    code: `DATA: lt_users TYPE TABLE OF usr02,
+    content: `DATA: lt_users TYPE TABLE OF usr02,
       ls_user TYPE usr02.
 
 SELECT * FROM usr02
@@ -18,11 +46,14 @@ SELECT * FROM usr02
 LOOP AT lt_users INTO ls_user.
   WRITE: / ls_user-bname, ls_user-ustyp.
 ENDLOOP.`,
-    lang: "abap"
-  },
-  {
+    language: "abap",
+    category: "Backend",
+    tags: ["database", "sap", "abap"]
+  });
+
+  await createNote({
     title: "JavaScript Async Function",
-    code: `async function fetchUserData(userId) {
+    content: `async function fetchUserData(userId) {
   try {
     const response = await fetch(\`/api/users/\${userId}\`);
     if (!response.ok) {
@@ -39,11 +70,14 @@ ENDLOOP.`,
 // Usage
 const user = await fetchUserData(123);
 console.log(user);`,
-    lang: "javascript"
-  },
-  {
+    language: "javascript",
+    category: "Frontend",
+    tags: ["async", "api", "javascript"]
+  });
+
+  await createNote({
     title: "Python Data Processing",
-    code: `import pandas as pd
+    content: `import pandas as pd
 import numpy as np
 
 def process_sales_data(file_path):
@@ -69,78 +103,109 @@ def process_sales_data(file_path):
 # Example usage
 results = process_sales_data('sales_data.csv')
 print(f"Total Sales: ${'{'}results['total_sales']:,.2f{'}'}")`,
-    lang: "python"
-  },
-  {
-    title: "AutoHotkey Window Manager",
-    code: `; Window management script
-#NoEnv
-SendMode Input
-SetWorkingDir %A_ScriptDir%
+    language: "python",
+    category: "Backend",
+    tags: ["pandas", "data-processing", "python"]
+  });
 
-; Win + Arrow keys for window management
-#Left::
-    WinGetPos, X, Y, Width, Height, A
-    WinMove, A,, 0, 0, A_ScreenWidth/2, A_ScreenHeight
-Return
-
-#Right::
-    WinGetPos, X, Y, Width, Height, A
-    WinMove, A,, A_ScreenWidth/2, 0, A_ScreenWidth/2, A_ScreenHeight
-Return
-
-#Up::
-    WinMaximize, A
-Return
-
-#Down::
-    WinMinimize, A
-Return
-
-; Ctrl+Alt+T for new terminal
-^!t::
-    Run, wt.exe
-Return`,
-    lang: "autohotkey"
-  }
-];
+  // Refresh notes after creating samples
+  notes = await getAllNotes();
+}
 ---
 
-<Layout title="Code Snippet Manager">
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <header class="bg-white dark:bg-gray-800 shadow">
-      <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-          Code Snippet Manager
-        </h1>
-        <button
-          id="theme-toggle"
-          class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-          aria-label="Toggle theme"
-        >
-          <svg class="w-6 h-6 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
-          </svg>
-          <svg class="w-6 h-6 block dark:hidden" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-          </svg>
-        </button>
-      </div>
-    </header>
+<Layout title="Code Notes Manager">
+  <div class="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Sidebar -->
+    <Sidebar 
+      categories={categories} 
+      tags={tags} 
+      selectedCategory={selectedCategory} 
+      selectedTag={selectedTag}
+      searchQuery={searchQuery}
+    />
 
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      <div class="px-4 py-6 sm:px-0">
-        <div class="grid gap-6">
-          {snippets.map((snippet) => (
-            <CodeSnippet
-              title={snippet.title}
-              code={snippet.code}
-              lang={snippet.lang}
-            />
-          ))}
+    <!-- Main Content -->
+    <div class="flex-1 lg:ml-64">
+      <header class="bg-white dark:bg-gray-800 shadow">
+        <div class="px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+              {selectedCategory ? `Category: ${selectedCategory}` : 
+               selectedTag ? `Tag: #${selectedTag}` :
+               searchQuery ? `Search: "${searchQuery}"` :
+               'All Notes'}
+            </h1>
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              {notes.length} {notes.length === 1 ? 'note' : 'notes'} found
+            </p>
+          </div>
+          <button
+            id="theme-toggle"
+            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            aria-label="Toggle theme"
+          >
+            <svg class="w-6 h-6 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
+            </svg>
+            <svg class="w-6 h-6 block dark:hidden" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+            </svg>
+          </button>
         </div>
-      </div>
-    </main>
+      </header>
+
+      <main class="px-4 sm:px-6 lg:px-8 py-8">
+        {notes.length === 0 ? (
+          <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No notes found</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {searchQuery || selectedCategory || selectedTag ? 
+                'Try adjusting your filters or search query.' :
+                'Get started by creating a new note.'}
+            </p>
+          </div>
+        ) : (
+          <div class="grid gap-6">
+            {notes.map((note) => (
+              <div class="relative group">
+                <CodeSnippet
+                  title={note.title}
+                  code={note.content}
+                  lang={note.language}
+                />
+                <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                  <a
+                    href={`/notes/edit/${note.id}`}
+                    class="p-2 bg-white dark:bg-gray-700 rounded-md shadow-sm hover:bg-gray-100 dark:hover:bg-gray-600"
+                    title="Edit note"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </a>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    {note.category}
+                  </span>
+                  {note.tags.map((tag) => (
+                    <a
+                      href={`/?tag=${encodeURIComponent(tag)}`}
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    >
+                      #{tag}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
 
     <footer class="bg-white dark:bg-gray-800 shadow mt-12">
       <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
