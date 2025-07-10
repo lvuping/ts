@@ -13,7 +13,7 @@ A secure web application built with Astro 5 for managing personal knowledge with
 
 1. Install dependencies:
 ```bash
-npm install
+pnpm install
 ```
 
 2. Configure authentication password:
@@ -22,7 +22,7 @@ npm install
 
 3. Start the development server:
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 4. Open http://localhost:4321 in your browser
@@ -34,9 +34,9 @@ The default password is `changeme123`. Please change this in production by setti
 ## Development Commands
 
 ```bash
-npm run dev    # Start development server
-npm run build  # Build for production
-npm run preview  # Preview production build
+pnpm run dev    # Start development server
+pnpm run build  # Build for production
+pnpm run preview  # Preview production build
 ```
 
 ## Testing

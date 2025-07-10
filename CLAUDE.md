@@ -10,12 +10,12 @@ This is a secure code snippet manager built with Astro 5, designed for storing a
 
 ```bash
 # Development
-npm run dev      # Start development server on http://localhost:4321
-npm start        # Alias for npm run dev
+pnpm run dev      # Start development server on http://localhost:4321
+pnpm start        # Alias for pnpm run dev
 
 # Production Build
-npm run build    # Run type checking with astro check, then build for production
-npm run preview  # Preview production build locally
+pnpm run build    # Run type checking with astro check, then build for production
+pnpm run preview  # Preview production build locally
 
 # Testing
 node integration-test.js  # Run integration tests for authentication and API endpoints
