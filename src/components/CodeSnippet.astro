@@ -1,0 +1,110 @@
+---
+import { highlightCode } from '../lib/shiki';
+
+export interface Props {
+  code: string;
+  lang: string;
+  title?: string;
+}
+
+const { code, lang, title } = Astro.props;
+const highlightedCode = await highlightCode(code, lang, 'light');
+const highlightedCodeDark = await highlightCode(code, lang, 'dark');
+---
+
+<div class="code-snippet mb-6">
+  {title && (
+    <div class="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-t-lg border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{title}</span>
+      <div class="flex gap-2">
+        <span class="text-xs text-gray-500 dark:text-gray-400 uppercase">{lang}</span>
+        <button
+          class="copy-button text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+          data-code={code}
+          title="Copy to clipboard"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  )}
+  <div class="code-container relative">
+    {!title && (
+      <button
+        class="copy-button absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors z-10"
+        data-code={code}
+        title="Copy to clipboard"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+          <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+        </svg>
+      </button>
+    )}
+    <div class="light-code block dark:hidden" set:html={highlightedCode} />
+    <div class="dark-code hidden dark:block" set:html={highlightedCodeDark} />
+  </div>
+</div>
+
+<style>
+  .code-snippet {
+    @apply rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700;
+  }
+
+  .code-container {
+    @apply overflow-x-auto;
+  }
+
+  .code-container :global(pre) {
+    @apply p-4 m-0 text-sm;
+  }
+
+  .code-container :global(code) {
+    @apply font-mono;
+  }
+
+  .copy-button {
+    @apply cursor-pointer;
+  }
+
+  .copy-button.copied {
+    @apply text-green-600 dark:text-green-400;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const copyButtons = document.querySelectorAll('.copy-button');
+    
+    copyButtons.forEach(button => {
+      button.addEventListener('click', async () => {
+        const code = button.getAttribute('data-code');
+        if (code) {
+          try {
+            await navigator.clipboard.writeText(code);
+            button.classList.add('copied');
+            
+            // Change icon to checkmark
+            const svg = button.querySelector('svg');
+            if (svg) {
+              svg.innerHTML = '<path d="M20 6 9 17l-5-5"/>';
+            }
+            
+            // Reset after 2 seconds
+            setTimeout(() => {
+              button.classList.remove('copied');
+              if (svg) {
+                svg.innerHTML = '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>';
+              }
+            }, 2000);
+          } catch (err) {
+            console.error('Failed to copy:', err);
+          }
+        }
+      });
+    });
+  });
+</script>
